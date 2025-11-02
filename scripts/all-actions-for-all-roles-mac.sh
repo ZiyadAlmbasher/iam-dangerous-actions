@@ -1,8 +1,8 @@
-## Author: David Kerber, with some AI code changes.
-## Usage: sh all-actions-for-all-roles-mac.sh 
-
-
 #!/bin/bash
+
+# Author: David Kerber, with some AI code changes.
+# Usage: sh all-actions-for-all-roles-mac.sh 
+
 
 # Prompt for AWS Account Number
 read -p "Enter the AWS Account Number: " account

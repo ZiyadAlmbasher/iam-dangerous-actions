@@ -1,8 +1,7 @@
-## Author: David Kerber, with AI code enhancements for processing and error handling.
-## Usage: sh all-actions-for-all-roles.sh 
-
-
 #!/bin/sh
+
+# Author: David Kerber, with AI code enhancements for processing and error handling.
+# Usage: sh all-actions-for-all-roles.sh 
 
 # Prompt for AWS Account Number
 read -p "Enter the AWS Account Number: " account
