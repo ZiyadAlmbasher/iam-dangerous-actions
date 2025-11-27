@@ -2,8 +2,11 @@
 
 Below are some practical, real-world use case scenarios for using ```iam-dangerous-actions```.
 
-<br />
 
+
+**Important note**: The scenarios included in this document will use a pre-configured Docker image that contains all the necessary packages and tools defined in this [Dockerfile](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/docker/Dockerfile). This prevents any dependencies or alterations to your current operating system. If you would prefer to install and run all the scripts and required packages manually, please refer to [this guide](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases-manual-steps.md).
+
+<br />
 
 ## Table of Contents
 - [Security Risk Labels](#Security-Risk-Labels) 
@@ -42,89 +45,105 @@ For the first scenario, we will assume that a **security incident**, or **very s
 
 ## Scenario 2: Finding all dangerous IAM Roles in the AWS account
 
-This is a very common use case: to identify **all existing** IAM Roles that could pose a security threat (contain dangerous IAM actions) if abused by malicious users, whether internal or external. The same concept applies to legitimate users who performed damaging operations accidentally.
+This scenario addresses a very common use case: identifying **all existing IAM roles** that may present security risks if exploited by malicious actors—whether internal or external—due to the presence of dangerous IAM actions. The same principle applies to legitimate users who might inadvertently perform harmful operations.
 
-As we progress through the demo, each IAM role will automatically contain **all of the IAM actions** included in its identity or inline policies. Additionally, any explicit deny actions included in any IAM role's policies will be automatically **excluded** from the results. 
+For each IAM role under analysis, **all IAM actions** specified in its attached policies, including inline policies, will be evaluated. Explicit deny actions specified within a role’s policies will be automatically **excluded** from the results.
+
 
 - **Step 1**:
 
-  To avoid conflicts with existing installed packages, it is strongly recommended to run this demo in a new Docker container (or Virtual Machine). The steps include everything required to make things work on a base OS.
-  
-  The demo has been tested and confirmed to work on Ubuntu Linux. Special instructions are included for macOS users accordingly.
+  If ```Docker``` is not already installed on the system, please follow this [quick guide](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/docker/Docker-install-ubuntu.md) to install it on Ubuntu-based Linux distributions. 
 
-  First, we will install and run [iam-collect](https://github.com/cloud-copilot/iam-collect) in order to retrieve the AWS IAM data locally, as well as [iam-lens](https://github.com/cloud-copilot/iam-lens), which the script in Step 2 below will use. We will also install Python, Node, and other necessary packages:  
+  In Step 2 below, we will use [iam-collect](https://github.com/cloud-copilot/iam-collect), with the following required [IAM actions](https://github.com/cloud-copilot/iam-collect/blob/main/src/aws/collect-policy.json) to run it. Please ensure that these actions are included in the IAM Role permissions that will be used in the subsequent steps.   
   
+  Before running the ```docker-run``` commands in Step 2, let's install and configure some prerequisites.     
+
 
   ```bash
-  cd ~ && mkdir iam-demo1 && cd iam-demo1  
-
   sudo apt update
-  sudo apt install -y python3 jq git curl unzip  
+  sudo apt install -y curl unzip git 
+
+  # Creates our working directory and warns us if it already exists  
+  [ ! -d ~/iam-dangerous-actions-demo ] && (mkdir ~/iam-dangerous-actions-demo || { echo "Failed to create directory"; exit 1; }) || echo "Directory already exists"       
+  
+  cd ~/iam-dangerous-actions-demo 
 
 
-  ## Removing existing apt-installed nodejs versions and installing v22.18.0 through nvm to avoid conflicts: 
-  sudo apt purge nodejs npm
-  sudo apt autoremove
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-  source ~/.bashrc 
-  nvm install v22.18.0
-  source ~/.bashrc && npm install -g npm@11.5.2
-
-
-  ## Installing the AWS CLI 
+  # Installing the AWS CLI. Skip if it is already installed 
   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
-  unzip awscliv2.zip && cd aws && sudo ./install && cd ~/iam-demo1
+  unzip awscliv2.zip && cd aws && sudo ./install && cd .. && rm -rf awscliv2.zip aws 
 
 
-  ## Optional: verify AWS CLI installation
+  # Optional: verify AWS CLI installation
   aws --version
 
 
-  ## Running AWS Configure 
+  # Running AWS Configure, mostly to set the Region for the STS tokens 
   aws configure 
     AWS Access Key ID [None]: (press enter to leave empty)
     AWS Secret Access Key [None]: (press enter to leave empty)
     Default region name [None]: us-east-1   
     Default output format [None]: json
-  
 
-  ## Export AWS credentials (replace with your actual credentials)
+
+  # Export AWS credentials, which will be later used by the Docker container
   export AWS_ACCESS_KEY_ID="your-access-key"
   export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
-  export AWS_SESSION_TOKEN="your-session-token"
+  export AWS_SESSION_TOKEN="your-session-token"     
 
 
-  ## Optional: validate AWS credentials
+  # Optional: validate if AWS credentials are OK
   aws sts get-caller-identity
 
 
-  ## Install and configure iam-lens & iam-collect: 
-  npm install -g @cloud-copilot/iam-collect
-  iam-collect init
-  iam-collect download --services iam
-  npm install -g @cloud-copilot/iam-lens
+  # Git clone the iam-dangerous-actions repo to get the Dockerfile: 
+  cd ~/iam-dangerous-actions-demo 
+  git clone https://github.com/ZiyadAlmbasher/iam-dangerous-actions.git && cp iam-dangerous-actions/docker/Dockerfile . 
+
   ```  
 <br />
 
 - **Step 2**:
 
-   The next step is to run the following [shell script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/all-actions-for-all-roles.sh), kindly provided by [David Kerber](https://www.linkedin.com/in/davidkerber/). The script will create **one** .txt file for **every** IAM role that exists in the AWS account. Each .txt file will therefore represent an IAM role and include **all of its combined IAM actions** (for both inline and identity-based policies). The script's output is stored in a new ```results``` folder.
+  Using the [iam-collect](https://github.com/cloud-copilot/iam-collect) tool, let's gather **all** the customer-managed IAM policies in the account through the Docker container so that they are available locally. 
+
+  We will then run the following [shell script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/all-actions-for-all-roles.sh), kindly provided by [David Kerber](https://www.linkedin.com/in/davidkerber/), within the Docker container. 
+   
+  The script will create **one** .txt file for **every IAM role** that exists in the AWS account. Each ```.txt``` file will therefore represent an IAM role and include **all of its combined IAM actions** (for both inline and identity-based policies). The script's output will be stored in a single ```results``` folder,  which will be copied from the container to our local terminal.
 
   ```bash
-  cd ~/iam-demo1
+  cd ~/iam-dangerous-actions-demo 
 
-  git clone https://github.com/ZiyadAlmbasher/iam-dangerous-actions/
+  # Build the docker container from our Dockerfile 
+  sudo docker build -t iam-dangerous-actions . 
   
-  ## For macOS users, copy "all-actions-for-all-roles-mac.sh" instead of "all-actions-for-all-roles.sh":  
-  cp iam-dangerous-actions/scripts/all-actions-for-all-roles.sh . 
+
+  # Download all IAM Roles, policies, etc through iam-collect and leave a copy on our local directory  
+
+  docker run -ti \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+  -v "$(pwd)/:/iam-dangerous-actions-demo" -w /root/ iam-dangerous-actions /bin/bash -c \
+  "iam-collect download --services iam && cp -rf /root/iam-data /iam-dangerous-actions-demo/" 
 
 
-  ## For macOS users, it would be: sh all-actions-for-all-roles-mac.sh
-  sh all-actions-for-all-roles.sh 
+
+  # Run the all-actions-for-all-roles.sh script, as described above, which creates a results folder and
+  # syncs it to local terminal 
+
+  docker run -ti \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+  -v "$(pwd)/:/iam-dangerous-actions-demo" -w /root/ iam-dangerous-actions /bin/bash -c \
+  "cp -rf /iam-dangerous-actions-demo/iam-data /root/iam-data && sh all-actions-for-all-roles.sh && \
+  cp -rf /root/results /iam-dangerous-actions-demo/"
   ``` 
 
   Here is a sample terminal output of ```all-actions-for-all-roles.sh```: 
   ```bash
+  ...
   Processed arn:aws:iam::111222333444:role/service-role/ABC -> results/arn_aws_iam__111222333444_role_service-role_ABC.txt
   Processed arn:aws:iam::111222333444:role/DEF -> results/arn_aws_iam__111222333444_role_DEF.txt
  
@@ -134,23 +153,35 @@ As we progress through the demo, each IAM role will automatically contain **all 
 
  - **Step 3**:
 
-   Lastly, using this AI-generated [python script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/IAM_cross_checker_MP.py), we can now cross-check any of the available ```iam-dangerous-actions``` [lists](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/lists) against the ```results``` folder, which contains all of the IAM Role files, and their respective permissions. For this example, we will use the ```iam-actions-HT-risk.txt``` list. 
+   At this stage, we may choose from the following ```iam-dangerous-actions-security-risk``` lists: [all-security-risks](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-all-risks.txt), [PE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-PE-risk.txt), [DC](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DC-risk.txt), [DE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DE-risk.txt) or [HT](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-HT-risk.txt), in order to cross-reference the ```iam-dangerous-actions``` against the ```results``` folder, which contains all IAM roles and their associated policies within the AWS account.
+   
+   In this example, we will select the ```iam-actions-HT-risk.txt``` list, and run [this AI-generated Python script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/IAM_cross_checker_MP.py) through our Docker container to accomplish all of this.  
 
-   **Side-note:** Using any of the ```iam-dangerous-actions``` lists which **have** security risks assigned to their IAM actions, will save a significant amount of effort later on compared to choosing the [iam-dangerous-actions.txt](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-dangerous-actions.txt) that has **no** security risks assigned. This is because the output of the script below will automatically include the IAM actions **and their respective security risks**, rather than this having to be done manually.
+   **Side-note:** Using any of the ```iam-dangerous-actions``` lists that **have** security risks assigned to their IAM actions, will save a significant amount of effort later on compared to choosing the [iam-dangerous-actions.txt](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-dangerous-actions.txt) that has **no** security risks assigned. This is because the script below will automatically include the IAM actions **and their respective security risks**, rather than this having to be done manually.
 
    <br />
 
    
+   ```bash
+   cd ~/iam-dangerous-actions-demo 
+  
+   # Running the IAM_cross_checker_MP.py script. We can also replace "iam-actions-HT-risk.txt" by the name of 
+   # any of the other security-lists available. The Docker container has already access to all of them. 
+
+   docker run -ti \
+   -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+   -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+   -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+   -v "$(pwd)/:/iam-dangerous-actions-demo" -w /root/ iam-dangerous-actions /bin/bash -c \
+   "cp -rf /iam-dangerous-actions-demo/results /root/ && \
+   python3 IAM_cross_checker_MP.py iam-actions-HT-risk.txt results output-all-dangerous-roles.txt && \
+   cp -rf /root/output-all-dangerous-roles.txt /iam-dangerous-actions-demo/" 
    ```
-   cd ~/iam-demo1
-  
-   cp iam-dangerous-actions/scripts/IAM_cross_checker_MP.py .
-    
-   cp iam-dangerous-actions/lists/iam-actions-HT-risk.txt .   
-  
-   python3 IAM_cross_checker_MP.py iam-actions-HT-risk.txt results output-all-dangerous-roles.txt 
-   ```
-  
+   The Docker container will copy the file "output-all-dangerous-roles.txt" to our local working 
+   directory ```iam-dangerous-actions-demo```. 
+
+
+
    Sample terminal output of IAM_cross_checker_MP.py: 
 
    ```
@@ -162,7 +193,8 @@ As we progress through the demo, each IAM role will automatically contain **all 
    Roles processed: 125
    Roles with matching dangerous-iam-actions: 44
    ```
- 
+   <br />
+
    Sample file output of output-all-dangerous-roles.txt:
 
    ``` 
@@ -179,104 +211,50 @@ As we progress through the demo, each IAM role will automatically contain **all 
 
 <br />
 
- - **Step 4**:
-
-   Cleaning up iam-demo1: 
-
-    ```bash
-    cd ~ && rm -rf ~/iam-demo1
-    ```
-
-<br />
-
 ## Scenario 3: Checking which IAM policies are "dangerous" 
 
 In Scenario 3, we will check if **newly created** or **existing** IAM policies contain any dangerous IAM actions. We will use an AI-generated [python script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/IAM_cross_checker_SP.py), which will identify the presence of ```iam-dangerous-actions``` across any IAM policy we would like to audit.  
 
 
 - **Step 1**: 
+    
+    **Important note**: If you have not already, please follow all the commands in **Step 1** of Scenario 2 above. 
 
-    To avoid conflicts with existing installed packages, it is strongly recommended to run this demo in a new Docker container (or Virtual Machine). The steps include everything required to make things work on a base OS.
-
-    First, let's gather **all** the customer-managed IAM policies in the account using [iam-collect](https://github.com/cloud-copilot/iam-collect), so they are available locally. We will also install Python, Node v20.0+, and other necessary packages:  
-
+    Then, let's gather **all** the customer-managed IAM policies in the account using [iam-collect](https://github.com/cloud-copilot/iam-collect) through the Docker container, so they are available in our local directory ```~/iam-dangerous-actions-demo```. 
 
     ```bash
-    cd ~ && mkdir iam-demo2 && cd iam-demo2  
-
-    sudo apt update
-    sudo apt install -y python3 jq git curl unzip  
+    # Build the docker image 
+    cd ~/iam-dangerous-actions-demo && sudo docker build -t iam-dangerous-actions . 
 
 
-    ## Removing existing apt-installed nodejs versions and installing v22.18.0 through nvm to avoid conflicts: 
-    sudo apt purge nodejs npm
-    sudo apt autoremove
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
-    source ~/.bashrc 
-    nvm install v22.18.0
-    source ~/.bashrc && npm install -g npm@11.5.2
+    # Download all IAM Roles, policies, etc through iam-collect and leave a copy on our local shell directory  
 
-
-    ## Installing the AWS CLI
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" 
-    unzip awscliv2.zip && cd aws && sudo ./install && cd ~/iam-demo2
-
-
-    ## Optional: verify AWS CLI installation
-    aws --version
-
-
-    ## Running aws configure: 
-    aws configure 
-      AWS Access Key ID [None]: (press enter to leave empty)
-      AWS Secret Access Key [None]: (press enter to leave empty)
-      Default region name [None]: us-east-1   
-      Default output format [None]: json
-
-
-    ## Export AWS credentials (replace with your actual credentials)
-    export AWS_ACCESS_KEY_ID="your-access-key"
-    export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
-    export AWS_SESSION_TOKEN="your-session-token"  # Only needed for temporary credentials
-
-
-    ## Optional: validate AWS connectivity
-    aws sts get-caller-identity
-
-
-    ## Install and configure iam-collect: 
-    npm install -g @cloud-copilot/iam-collect
-    iam-collect init
-    iam-collect download --services iam
+    docker run -ti \
+    -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+    -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+    -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+    -v "$(pwd)/:/iam-dangerous-actions-demo" -w /root/ iam-dangerous-actions /bin/bash -c \
+    "iam-collect download --services iam && cp -rf /root/iam-data /iam-dangerous-actions-demo/" 
     ```
+    
   <br />
 
 - **Step 2**: 
 
-    Next, we can choose any of the ```iam-dangerous-actions``` security-risk lists to use: [all-security-risks](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DE-risk.txt), [PE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-PE-risk.txt), [DC](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DC-risk.txt), [DE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DE-risk.txt) or [HT](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-HT-risk.txt). 
-    
-    In this example, we will use the [list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-all-risks.txt) ```iam-actions-all-risks.txt```, which includes **all** the IAM actions and their respective security risks. 
+  Next, we will select 2 things: which IAM policy to audit, and which ```iam-dangerous-actions-security-risk``` list to run against it in order to highlight any matched ```iam-dangerous-actions```. 
+
+
+  - For the IAM policy, we can copy any of the synced IAM policies to our working directory, which will in turn be synced to our Docker container automatically (take note of the <iam_policy_name_in_lower_case.json> which will be used in the ```docker-run``` command in Step 3 below):  
 
     ```bash
-     cd ~/iam-demo2
-
-     git clone https://github.com/ZiyadAlmbasher/iam-dangerous-actions/ && cd iam-dangerous-actions/scripts 
-     
-     cp ~/iam-demo2/iam-dangerous-actions/lists/iam-actions-all-risks.txt .
-   
-    ```
-  <br />
-
-- **Step 3**: 
-
-  Now we can choose any IAM policy we would like to audit against our ```iam-actions-all-risks.txt``` list, and copy it over to our working directory: 
+    # Make sure to change the AWS account number and specific IAM policy name accordingly:  
+    
+    cp ~/iam-dangerous-actions-demo/iam-data/aws/aws/accounts/111222333444/iam/policy/<iam_policy_name_lower_case>/current_policy.json ~/iam-dangerous-actions-demo/<iam_policy_name_in_lower_case>.json 
+    ``` 
+  - All of the following ```security-risk-lists``` are already available in the docker container, we just have to take note of the filename and use it directly in the ```docker-run``` command in Step 3 below: ```iam-actions-all-risks.txt```, ```iam-actions-PE-risk.txt```, ```iam-actions-DC-risk.txt```, ```iam-actions-DE-risk.txt``` or ```iam-actions-HT-risk.txt```.
+    
   
-  ```bash
-  ## Make sure to change the AWS account number and specific IAM policy names accordingly:  
-  cp ~/iam-demo2/iam-data/aws/aws/accounts/111222333444/iam/policy/<iam_policy_name_lower_case>/current_policy.json ~/iam-demo2/iam-dangerous-actions/scripts/<iam_policy_name_in_lower_case>.json
-
-  ``` 
-  For this demo, the ```dangerous_iam_policy.json``` sample IAM policy **already** exists in the scripts folder. It has the following permissions:
+  In this particular demo, we will use the [all-security-risks-list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-all-risks.txt), which includes **all** the IAM actions and their respective security risks, as well as the ```dangerous_iam_policy.json``` sample IAM policy, which has the following permissions:
 
     ```bash
     {
@@ -297,33 +275,42 @@ In Scenario 3, we will check if **newly created** or **existing** IAM policies c
                     "ec2:DescribeAddresses",
                     "ec2:DescribeImportSnapshotTasks"
                 ],
+
                 "Resource": "*"
             }
         ]
     }
     ```
-
   Notice how `iam:*`, `s3:*`, and `sts:AssumeRole` coexist with other, less harmful IAM actions, such as `ec2:DescribeAccountAttributes`. 
-  
+
   <br />
 
-- **Step 4**: 
+- **Step 3**: 
 
-  Finally, we can now run this [Python script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/IAM_cross_checker_SP.py), which will check if there are any ```iam-dangerous-actions``` that also exist in the IAM policy ```dangerous-iam-policy.json```. Let's see it in action:  
+  Finally, we can now run this [Python script](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/scripts/IAM_cross_checker_SP.py) through the Docker container, which will cross-check if there are any ```iam-dangerous-actions``` that exist in both the ```iam-actions-all-risks.txt security-risk-list``` and the IAM policy ```dangerous-iam-policy.json```. Both of these files are already available within the Docker container.
+  
+  Let's see the script in action: 
 
-    ```bash
-    cd ~/iam-demo2/iam-dangerous-actions/scripts/
+  ```bash
+  cd ~/iam-dangerous-actions-demo
 
-    ## Option 1: We can run the script against the sample IAM policy named dangerous-iam-policy.json which already exists in the scripts folder:  
-    python3 IAM_cross_checker_SP.py iam-actions-all-risks.txt dangerous-iam-policy.json 
-    
+  # In the example below, we will use "iam-actions-all-risks.txt" and "dangerous-iam-policy.json" as input for 
+  # the IAM_cross_checker_SP.py python3 script. However, these two files can be replaced with any IAM policies 
+  # or security risk lists, as instructed in Step 2:          
 
-    ## OR, option 2: run the script and point it directly to an IAM policy as part of the iam-data folder created by iam-collect in Step 1. 
-    ## Don't forget to change the account number and IAM policy name accordingly:  
-    python3 IAM_cross_checker_SP.py iam-actions-all-risks.txt ~/iam-demo2/iam-data/aws/aws/accounts/111222333444/iam/policy/<iam_policy_name_in_lower_case>/current_policy.json
-    ```
+  docker run -ti \
+  -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+  -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+  -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+  -v "$(pwd)/:/iam-dangerous-actions-demo" -w /root/ iam-dangerous-actions /bin/bash -c \
+  "cp -rf /iam-dangerous-actions-demo/* /root/ && \
+  python3 IAM_cross_checker_SP.py iam-actions-all-risks.txt dangerous-iam-policy.json && \
+  cp -rf /root/matched_permissions_SP.txt /iam-dangerous-actions-demo/"  
+  ```
 
-    The script automatically handles IAM actions with wildcards in the IAM policy, and saves the results to a file named ```matched_permissions_SP.txt```. Here is a sample terminal output: 
+   The script automatically handles IAM actions with wildcards in the IAM policy, and saves the results to a file named ```matched_permissions_SP.txt```. This file is  copied from the Docker container to the local directory ```~/iam-dangerous-actions-demo```. 
+
+   Here is a sample terminal output of the script: 
 
   ```bash
   ============================================================
@@ -360,17 +347,6 @@ In Scenario 3, we will check if **newly created** or **existing** IAM policies c
   ```
 
   As we can see, our IAM policy includes 132 **potentially** dangerous IAM actions, where each IAM action has the appropriate security risk(s) assigned to it. Alternatively, we can also use the `iam-dangerous-actions.txt` list if we need to have output of IAM Actions and no security risks assigned.  
-
-  <br />
-
-  **Step 5**:
-
-  Now we can carefully review the results to determine the necessity or potential removal of these IAM actions. After the analysis is complete, clean up the demo environment:
-
-    ```bash
-    cd ~ && rm -rf ~/iam-demo2
-    ```
-
 
   <br />
 
