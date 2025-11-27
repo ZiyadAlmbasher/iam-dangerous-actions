@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="supporting-files/logo2.png">
+  <img src="supporting-files/logo.png">
 </p>
 
 # iam-dangerous-actions
@@ -9,8 +9,8 @@
 
 1. [Problem Statement](#Problem-Statement)
 2. [What is iam-dangerous-actions](#What-is-iam-dangerous-actions)
-3. [Real-world use cases](#Real-world-use-cases)
-4. [How are risks assigned to IAM actions?](#How-are-security-risks-assigned-to-iam-actions)
+3. [Getting Started: Real-world use cases](#Getting-Started-Real-world-use-cases)
+4. [How are security risks assigned to IAM actions?](#How-are-security-risks-assigned-to-iam-actions)
 5. [Available-formats](#Available-formats)
 6. [List of current AWS services](#List-of-current-AWS-services)
 7. [Total number of iam-dangerous-actions](#Total-number-of-iam-dangerous-actions)
@@ -23,7 +23,6 @@
 14. [Acknowledgements](#Acknowledgements) 
 
 <br />
-
 
 ## Problem Statement
 
@@ -44,7 +43,7 @@ A **list** of hand-picked **dangerous** IAM actions that, if used with malicious
 3. Data Exfiltration (DE)
 4. Hiding one's tracks (HT)
 
-**Each** of the ```iam-dangerous-actions``` is assigned to one or more of the security risks listed above. The process by which these security risks are assigned to each IAM action is [explained here](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/how-are-risks-assigned.md).  
+**Each** of the ```iam-dangerous-actions``` is assigned to one or more of the **security risks** listed above. The process by which these security risks are assigned to each IAM action is [explained here](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/how-are-risks-assigned.md).  
 
 
 The ```iam-dangerous-actions``` list is available in different [formats](#Available-formats) (or sublists), for various [real-world use cases](#Real-world-use-cases).
@@ -52,11 +51,11 @@ The ```iam-dangerous-actions``` list is available in different [formats](#Availa
 
 <br />
 
-## Real-world use cases
+## Getting started: Real-world use cases
 
 There are currently 3 [real-world use cases](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md) to explore some of the capabilities of ```iam-dangerous-actions```.
 
-Here's a quick demo for "[Checking which IAM policies are dangerous](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md#scenario-3-checking-which-iam-policies-are-dangerous)":
+Here's the quick demo for "[Checking which IAM policies are dangerous](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md#scenario-3-checking-which-iam-policies-are-dangerous)":
 
 
 <!-- Image of test1.svg -->
@@ -74,39 +73,27 @@ A detailed overview is available [here](https://github.com/ZiyadAlmbasher/iam-da
 
 ## Available formats
 
-```iam-dangerous-actions``` is available in different formats (or sublists): 
+```iam-dangerous-actions``` is available in different [formats, or "sub-lists"](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/available-formats.md). 
 
-1. A single [list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-dangerous-actions.txt) with **all** the dangerous IAM actions. This list is available as a text file.  
-
-2. A single [list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-all-risks.txt) containing **all** the dangerous IAM actions, where each IAM action is categorised by all the **security risks** combined. This list is available as a text file.
-
-3. A single [list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/explicit-deny-all-actions.txt) of multiple **explicit-deny**  IAM policies. These explicit-deny IAM policies are split to fit IAM policy size limits, and they collectively contain **all** the dangerous IAM actions. The IAM policies are available in JSON format. 
-
-4. Multiple different lists of dangerous IAM actions. **Each** individual list is categorised by a **single security risk**: [PE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-PE-risk.txt), [DC](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DC-risk.txt), [DE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-DE-risk.txt) and [HT](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-HT-risk.txt). These lists are available as text files.
-
-
-5. Multiple **explicit-deny** IAM policies. **Each** individual explicit-deny IAM policy is categorised by a **single security risk**: [PE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/explicit-deny-PE-risk.txt), [DC](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/explicit-deny-DC-risk.txt), [DE](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/explicit-deny-DE-risk.txt) and [HT](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/explicit-deny-HT-risk.txt). These IAM policies are available in JSON format. 
-
-6. A single [list](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/lists/iam-actions-NA-risk.txt) of IAM actions labelled as "NA", with **no** security risks. It exists because some important IAM actions only pose security risks when **combined** with other IAM actions. This list will be used in a future project called ```iam-security-risks```. The list is available as a text file.  
 
 
 <br />
 
 ## List of current AWS services: 
-While AWS offers more than 300 services today, only a carefully selected subset of [services](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/supporting-files/current_services.txt) are included in the ```iam-dangerous-actions``` [lists](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/lists). 
+While AWS offers more than 300 services today, only a carefully selected subset of [services](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/supporting-files/current_services.txt) are included in the ```iam-dangerous-actions``` [lists](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/lists). 
 
 These AWS services are selected based on their importance and the security risks they pose. They generally fall under the following categories: 
 - AWS security services, such as IAM, AWS Config, AWS Organizations, and SecurityHub
 - Data-related AWS services, including data analytics services, databases, and storage  
 - AWS Compute services, such as EC2, Lambda, and API Gateway  
 
-The planned AWS services to be included are listed on the [issues page](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/issues?q=state%3Aopen%20label%3A%22Services-to-add%22).
+The planned AWS services to be included are listed [here](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/issues?q=state%3Aopen%20label%3A%22Services-to-add%22).
 
 <br />
 
 ## Total number of ```iam-dangerous-actions```
 
-All the ```iam-dangerous-actions``` [lists](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/lists) are versioned and include an exact count of the current IAM actions. A version history file can be found [here](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/supporting-files/versions.txt). 
+All of the ```iam-dangerous-actions``` [lists](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/tree/main/lists) are versioned and include an exact count of the current IAM actions included. A version history file can be found [here](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/supporting-files/versions.txt). 
 
 Once all planned AWS services have been [added](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/issues?q=state%3Aopen%20label%3A%22Services-to-add%22), it is estimated that ```iam-dangerous-actions``` will contain approximately 800-1500 unique IAM actions. This equates to approximately 4–8% of the 18,000+ [AWS IAM actions](https://aws.permissions.cloud/) available.
 
@@ -119,7 +106,9 @@ As more IAM actions corresponding to important AWS services are [added](https://
 
 Although many excellent IAM tools are available today, most focus on finding IAM misconfigurations, including least-privilege issues.  
 
-```iam-dangerous-actions``` aims to address IAM [from a different perspective](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/how-is-this-different.md), focusing instead on identifying inherently risky IAM actions, with specific security risks assigned to each action. It is therefore designed to be used alongside other IAM tools to offer a complementary perspective, rather than replacing existing solutions. 
+```iam-dangerous-actions``` aims to address IAM [from a different perspective](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/how-is-this-different.md), focusing on identifying inherently risky IAM actions in our IAM Roles and policies. Each one of these dangerous IAM actions will be classified under its own security risk label.  
+
+The project is therefore intended to be used alongside other IAM tools in order to offer a complementary perspective, rather than replace existing solutions. 
 
 <br />
 
@@ -129,7 +118,7 @@ Although many excellent IAM tools are available today, most focus on finding IAM
 
 - **AWS Security auditors** conducting comprehensive reviews of IAM Roles, policies, and permission-sets as part of AWS Account-wide security audits and compliance assessments.
 
-- **Pentesters** and **internal security teams** can also use ```iam-dangerous-actions``` to identify internal or external attack vectors and perform threat assessments.    
+- **Pentesters** and **internal security teams** can also use ```iam-dangerous-actions``` to identify internal or external attack vectors and perform security threat assessments.    
 
 <br />
 
@@ -155,10 +144,10 @@ The list(s) generated by ```iam-dangerous-actions``` will feed another project i
 <br />
 
 
-## Contributions and Feedback
+## Contributions and feedback
 Please submit any suggestions or feedback through the [issues page](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/issues), or [PRs](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/pulls) for any improvements. 
 
 <br />
 
 ## Acknowledgements
-Many thanks to [David Kerber](https://www.linkedin.com/in/davidkerber/) for supporting various aspects of this project throughout its different stages. 
+Many thanks to [David Kerber](https://www.linkedin.com/in/davidkerber/) and [DanK](https://github.com/danktec) for supporting various aspects of this project throughout its different stages. 
