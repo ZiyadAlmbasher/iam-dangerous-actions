@@ -55,7 +55,7 @@ The ```iam-dangerous-actions``` list is available in different [formats](#Availa
 
 There are currently 3 [real-world use cases](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md) to explore some of the capabilities of ```iam-dangerous-actions```.
 
-Here's the quick demo for "[Checking which IAM policies are dangerous](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md#scenario-3-checking-which-iam-policies-are-dangerous)":
+Here’s a quick demo of one of the use‑case scenarios: "[Checking which IAM policies are dangerous](https://github.com/ZiyadAlmbasher/iam-dangerous-actions/blob/main/documentations/real-world-use-cases.md#scenario-3-checking-which-iam-policies-are-dangerous)":
 
 
 <!-- Image of test1.svg -->
